@@ -16,23 +16,6 @@
  */
 package org.apache.nifi.processors.kafka;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Properties;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.regex.Pattern;
-
 import org.apache.nifi.annotation.behavior.DynamicProperty;
 import org.apache.nifi.annotation.behavior.InputRequirement;
 import org.apache.nifi.annotation.behavior.InputRequirement.Requirement;
@@ -52,15 +35,24 @@ import org.apache.nifi.processor.io.InputStreamCallback;
 import org.apache.nifi.processor.util.StandardValidators;
 import org.apache.nifi.processors.kafka.KafkaPublisher.KafkaPublisherResult;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Pattern;
+
 @InputRequirement(Requirement.INPUT_REQUIRED)
-@Tags({ "Apache", "Kafka", "Put", "Send", "Message", "PubSub" })
+@Tags({"Apache", "Kafka", "Put", "Send", "Message", "PubSub"})
 @CapabilityDescription("Sends the contents of a FlowFile as a message to Apache Kafka. The messages to send may be individual FlowFiles or may be delimited, using a "
         + "user-specified delimiter, such as a new-line.")
 @DynamicProperty(name = "The name of a Kafka configuration property.", value = "The value of a given Kafka configuration property.",
-                 description = "These properties will be added on the Kafka configuration after loading any provided configuration properties."
-        + " In the event a dynamic property represents a property that was already set as part of the static properties, its value wil be"
-        + " overriden with warning message describing the override."
-        + " For the list of available Kafka properties please refer to: http://kafka.apache.org/documentation.html#configuration.")
+        description = "These properties will be added on the Kafka configuration after loading any provided configuration properties."
+                + " In the event a dynamic property represents a property that was already set as part of the static properties, its value wil be"
+                + " overriden with warning message describing the override."
+                + " For the list of available Kafka properties please refer to: http://kafka.apache.org/documentation.html#configuration.")
 public class PutKafka extends AbstractKafkaProcessor<KafkaPublisher> {
 
     private static final String SINGLE_BROKER_REGEX = ".*?\\:\\d{3,5}";
@@ -130,8 +122,8 @@ public class PutKafka extends AbstractKafkaProcessor<KafkaPublisher> {
     public static final PropertyDescriptor PARTITION = new PropertyDescriptor.Builder()
             .name("Partition")
             .description("Specifies which Kafka Partition to add the message to. If using a message delimiter, all messages "
-                            + "in the same FlowFile will be sent to the same partition. If a partition is specified but is not valid, "
-                            + "then all messages within the same FlowFile will use the same partition but it remains undefined which partition is used.")
+                    + "in the same FlowFile will be sent to the same partition. If a partition is specified but is not valid, "
+                    + "then all messages within the same FlowFile will use the same partition but it remains undefined which partition is used.")
             .addValidator(StandardValidators.POSITIVE_INTEGER_VALIDATOR)
             .expressionLanguageSupported(true)
             .required(false)
@@ -153,12 +145,12 @@ public class PutKafka extends AbstractKafkaProcessor<KafkaPublisher> {
     public static final PropertyDescriptor MESSAGE_DELIMITER = new PropertyDescriptor.Builder()
             .name("Message Delimiter")
             .description("Specifies the delimiter (interpreted in its UTF-8 byte representation) to use for splitting apart multiple messages within a single FlowFile. "
-                            + "If not specified, the entire content of the FlowFile will be used as a single message. If specified, "
-                            + "the contents of the FlowFile will be split on this delimiter and each section sent as a separate Kafka "
-                            + "message. Note that if messages are delimited and some messages for a given FlowFile are transferred "
-                            + "successfully while others are not, the messages will be split into individual FlowFiles, such that those "
-                            + "messages that were successfully sent are routed to the 'success' relationship while other messages are "
-                            + "sent to the 'failure' relationship.")
+                    + "If not specified, the entire content of the FlowFile will be used as a single message. If specified, "
+                    + "the contents of the FlowFile will be split on this delimiter and each section sent as a separate Kafka "
+                    + "message. Note that if messages are delimited and some messages for a given FlowFile are transferred "
+                    + "successfully while others are not, the messages will be split into individual FlowFiles, such that those "
+                    + "messages that were successfully sent are routed to the 'success' relationship while other messages are "
+                    + "sent to the 'failure' relationship.")
             .required(false)
             .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
             .expressionLanguageSupported(true)
@@ -275,7 +267,6 @@ public class PutKafka extends AbstractKafkaProcessor<KafkaPublisher> {
      * The result {@link FlowFile} that is successful is then transfered to {@link #REL_SUCCESS}
      * <br>
      * The result {@link FlowFile} that is failed is then transfered to {@link #REL_FAILURE}
-     *
      */
     @Override
     protected boolean rendezvousWithKafka(ProcessContext context, ProcessSession session) throws ProcessException {
@@ -286,7 +277,7 @@ public class PutKafka extends AbstractKafkaProcessor<KafkaPublisher> {
             if (!this.isFailedFlowFile(flowFile)) {
                 session.getProvenanceReporter().send(flowFile,
                         context.getProperty(SEED_BROKERS).getValue() + "/"
-                        + context.getProperty(TOPIC).evaluateAttributeExpressions(flowFile).getValue());
+                                + context.getProperty(TOPIC).evaluateAttributeExpressions(flowFile).getValue());
                 session.transfer(flowFile, REL_SUCCESS);
             } else {
                 session.transfer(session.penalize(flowFile), REL_FAILURE);
@@ -344,7 +335,7 @@ public class PutKafka extends AbstractKafkaProcessor<KafkaPublisher> {
      * regardless if it has #FAILED* attributes set.
      */
     private PublishingContext buildPublishingContext(FlowFile flowFile, ProcessContext context,
-            InputStream contentStream) {
+                                                     InputStream contentStream) {
         String topicName;
         byte[] keyBytes;
         byte[] delimiterBytes = null;
@@ -443,7 +434,7 @@ public class PutKafka extends AbstractKafkaProcessor<KafkaPublisher> {
         Integer partitionValue = null;
         if (partitionStrategy.equalsIgnoreCase(USER_DEFINED_PARTITIONING.getValue())) {
             String pv = context.getProperty(PARTITION).evaluateAttributeExpressions(flowFile).getValue();
-            if (pv != null){
+            if (pv != null) {
                 partitionValue = Integer.parseInt(context.getProperty(PARTITION).evaluateAttributeExpressions(flowFile).getValue());
             }
         }
@@ -460,7 +451,7 @@ public class PutKafka extends AbstractKafkaProcessor<KafkaPublisher> {
      * @see #FAILED_DELIMITER_ATTR
      */
     private Map<String, String> buildFailedFlowFileAttributes(int lastAckedMessageIndex, FlowFile sourceFlowFile,
-            ProcessContext context) {
+                                                              ProcessContext context) {
         Map<String, String> attributes = new HashMap<>();
         attributes.put(FAILED_PROC_ID_ATTR, this.getIdentifier());
         attributes.put(FAILED_LAST_ACK_IDX, String.valueOf(lastAckedMessageIndex));
@@ -500,7 +491,10 @@ public class PutKafka extends AbstractKafkaProcessor<KafkaPublisher> {
         } else if (partitionStrategy.equalsIgnoreCase(RANDOM_PARTITIONING.getValue())) {
             partitionerClass = Partitioners.RandomPartitioner.class.getName();
         }
-        properties.setProperty("partitioner.class", partitionerClass);
+
+        // try to fix null pointer exception when USER_DEFINED_PARTITIONNING is set
+        if (partitionerClass != null)
+            properties.setProperty("partitioner.class", partitionerClass);
 
         // Set Dynamic Properties
         for (final Entry<PropertyDescriptor, String> entry : context.getProperties().entrySet()) {
@@ -508,8 +502,8 @@ public class PutKafka extends AbstractKafkaProcessor<KafkaPublisher> {
             if (descriptor.isDynamic()) {
                 if (properties.containsKey(descriptor.getName())) {
                     this.getLogger().warn("Overriding existing property '" + descriptor.getName() + "' which had value of '"
-                                    + properties.getProperty(descriptor.getName()) + "' with dynamically set value '"
-                                    + entry.getValue() + "'.");
+                            + properties.getProperty(descriptor.getName()) + "' with dynamically set value '"
+                            + entry.getValue() + "'.");
                 }
                 properties.setProperty(descriptor.getName(), entry.getValue());
             }

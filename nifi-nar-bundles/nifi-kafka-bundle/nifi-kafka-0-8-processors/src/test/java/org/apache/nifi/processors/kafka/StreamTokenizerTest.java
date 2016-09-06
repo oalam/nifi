@@ -41,6 +41,35 @@ import static org.junit.Assert.*;
 // to speed up the overall build
 public class StreamTokenizerTest {
 
+
+    @Test
+    public void validateSingleLine() {
+        String data = "Be not afraid of greatness:";
+        ByteArrayInputStream is = new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
+        StreamTokenizer scanner = null;
+        scanner = new StreamTokenizer(is);
+
+        assertTrue(Arrays.equals("Be not afraid of greatness:\n".getBytes(StandardCharsets.UTF_8), scanner.nextToken()));
+        assertNull(scanner.nextToken());
+    }
+
+    @Test
+    public void validateNoRegex() {
+        String data = "Be not afraid of greatness:\n" +
+                "some are born great, some achieve greatness, and some have greatness thrust upon them.\n" +
+                "The course of true love never did run smooth.\n" +
+                "To thine own self be true";
+        ByteArrayInputStream is = new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
+        StreamTokenizer scanner = null;
+        scanner = new StreamTokenizer(is);
+
+        assertTrue(Arrays.equals("Be not afraid of greatness:\n".getBytes(StandardCharsets.UTF_8), scanner.nextToken()));
+        assertTrue(Arrays.equals("some are born great, some achieve greatness, and some have greatness thrust upon them.\n".getBytes(StandardCharsets.UTF_8), scanner.nextToken()));
+        assertTrue(Arrays.equals("The course of true love never did run smooth.\n".getBytes(StandardCharsets.UTF_8), scanner.nextToken()));
+        assertTrue(Arrays.equals("To thine own self be true\n".getBytes(StandardCharsets.UTF_8), scanner.nextToken()));
+        assertNull(scanner.nextToken());
+    }
+
     @Test
     public void validateRegexMatch() {
         String data = "[USR-BACK] Be not afraid of greatness:\n" +
@@ -52,11 +81,8 @@ public class StreamTokenizerTest {
                 "thou canst not then be false to any man.\n";
         ByteArrayInputStream is = new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
         StreamTokenizer scanner = null;
-        try {
-            scanner = new StreamTokenizer(is, "(\\[\\S*\\])\\s+(.*)", "UTF-8", 1000, 2);
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
+        scanner = new StreamTokenizer(is, "(\\[\\S*\\])\\s+(.*)", "UTF-8");
+
 
         assertTrue(Arrays.equals("[USR-BACK] Be not afraid of greatness:\n".getBytes(StandardCharsets.UTF_8), scanner.nextToken()));
         assertTrue(Arrays.equals("[USR-BACK] some are born great, some achieve greatness, and some have greatness thrust upon them.\nThe course of true love never did run smooth.\n".getBytes(StandardCharsets.UTF_8), scanner.nextToken()));
@@ -76,11 +102,8 @@ public class StreamTokenizerTest {
                 "thou canst not then be false to any man.\n";
         ByteArrayInputStream is = new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
         StreamTokenizer scanner = null;
-        try {
-            scanner = new StreamTokenizer(is, "\\s(\\[\\S*\\])\\s+(.*)", "UTF-8", 1000, 2);
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
+        scanner = new StreamTokenizer(is, "\\s(\\[\\S*\\])\\s+(.*)", "UTF-8");
+
 
         assertNull(scanner.nextToken());
     }

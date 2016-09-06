@@ -36,21 +36,9 @@ public class StreamTokenizer {
 
     private final Pattern patternDelimiter;
 
-    private final Charset charset;
+    private final static String DEFAULT_REGEX = ".*";
 
-    private final int maxDataSize;
-
-    private final int initialBufferSize;
-
-
-    //   private byte[] buffer;
-
-    private int index;
-
-    private int mark;
-
-    private int readAheadLength;
-
+    private final static String DEFAULT_CHARSET = "UTF-8";
 
     private String currentLine = "";
 
@@ -58,10 +46,15 @@ public class StreamTokenizer {
 
     private long blocsCount = 0L;
 
-    private final long bytesOfLineSeparator;
+    private long bytesOfLineSeparator;
     private boolean isLeadingBloc = true;
 
     private boolean endOfStream = false;
+
+
+    public StreamTokenizer(InputStream is) {
+        this(is, DEFAULT_REGEX, DEFAULT_CHARSET);
+    }
 
     /**
      * Constructs a new instance
@@ -69,37 +62,16 @@ public class StreamTokenizer {
      * @param is             instance of {@link InputStream} representing the data
      * @param regexDelimiter String representing delimiter regex used to split the
      *                       input stream. Can be null
-     * @param maxDataSize    maximum size of data derived from the input stream. This means
-     *                       that neither {@link InputStream} nor its individual chunks (if
-     *                       delimiter is used) can ever be greater then this size.
      */
-    public StreamTokenizer(InputStream is, String regexDelimiter, String charset, int maxDataSize) throws UnsupportedEncodingException {
-        this(is, regexDelimiter, charset, maxDataSize, INIT_BUFFER_SIZE);
-    }
-
-    /**
-     * Constructs a new instance
-     *
-     * @param is                instance of {@link InputStream} representing the data
-     * @param regexDelimiter    String representing delimiter regex used to split the
-     *                          input stream. Can be null
-     * @param maxDataSize       maximum size of data derived from the input stream. This means
-     *                          that neither {@link InputStream} nor its individual chunks (if
-     *                          delimiter is used) can ever be greater then this size.
-     * @param initialBufferSize initial size of the buffer used to buffer {@link InputStream}
-     *                          or its parts (if delimiter is used) to create its byte[]
-     *                          representation. Must be positive integer. The buffer will grow
-     *                          automatically as needed up to the Integer.MAX_VALUE;
-     */
-    public StreamTokenizer(InputStream is, String regexDelimiter, String charset, int maxDataSize, int initialBufferSize) throws UnsupportedEncodingException {
-        this.validateInput(is, regexDelimiter, maxDataSize, initialBufferSize);
+    public StreamTokenizer(InputStream is, String regexDelimiter, String charset) {
+        this.validateInput(is, regexDelimiter);
         this.bufferedReader = new BufferedReader(new InputStreamReader(is));
         this.patternDelimiter = Pattern.compile(regexDelimiter);
-        this.charset = Charset.forName(charset);
-        this.initialBufferSize = initialBufferSize;
-        // this.buffer = new byte[initialBufferSize];
-        this.maxDataSize = maxDataSize;
-        this.bytesOfLineSeparator = "\n".getBytes(charset).length;
+        try {
+            this.bytesOfLineSeparator = "\n".getBytes(charset).length;
+        } catch (UnsupportedEncodingException e) {
+            this.bytesOfLineSeparator = "\n".getBytes(Charset.defaultCharset()).length;
+        }
 
     }
 
@@ -118,23 +90,22 @@ public class StreamTokenizer {
             while (currentLine != null) {
                 matcher = patternDelimiter.matcher(currentLine);
                 if (matcher.matches()) {
-
+                    blocsCount += 1;
                     if (isLeadingBloc) {
                         isLeadingBloc = false;
 
                         buffer = new StringBuilder(currentLine + "\n");
 
                     } else {
-                        blocsCount += 1;
                         final byte[] bloc = buffer.toString().getBytes();
 
                         buffer = new StringBuilder(currentLine + "\n");
                         return bloc;
                     }
 
-                } else if( buffer != null){
-                    buffer.append(currentLine + "\n");
-                }else {
+                } else if (buffer != null) {
+                    buffer.append(currentLine).append("\n");
+                } else {
                     buffer = new StringBuilder(currentLine + "\n");
                 }
                 currentLine = bufferedReader.readLine();
@@ -159,15 +130,9 @@ public class StreamTokenizer {
     /**
      *
      */
-    private void validateInput(InputStream is, String regexDelimiter, int maxDataSize, int initialBufferSize) {
+    private void validateInput(InputStream is, String regexDelimiter) {
         if (is == null) {
             throw new IllegalArgumentException("'is' must not be null");
-        } else if (maxDataSize <= 0) {
-            throw new IllegalArgumentException("'maxDataSize' must be > 0");
-        } else if (initialBufferSize <= 0) {
-            throw new IllegalArgumentException("'initialBufferSize' must be > 0");
-        } else if (regexDelimiter == null || regexDelimiter.isEmpty()) {
-            throw new IllegalArgumentException("'regexDelimiter' is not an optional argument");
         }
     }
 }

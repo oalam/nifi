@@ -34,7 +34,7 @@ public class StreamTokenizer {
 
     private final BufferedReader bufferedReader;
 
-    private final Pattern patternDelimiter;
+    private Pattern patternDelimiter;
 
     private final static String DEFAULT_REGEX = ".*";
 
@@ -66,7 +66,11 @@ public class StreamTokenizer {
     public StreamTokenizer(InputStream is, String regexDelimiter, String charset) {
         this.validateInput(is, regexDelimiter);
         this.bufferedReader = new BufferedReader(new InputStreamReader(is));
-        this.patternDelimiter = Pattern.compile(regexDelimiter);
+        try {
+            this.patternDelimiter = Pattern.compile(regexDelimiter);
+        }catch (Exception ex){
+            this.patternDelimiter = null;
+        }
         try {
             this.bytesOfLineSeparator = "\n".getBytes(charset).length;
         } catch (UnsupportedEncodingException e) {
@@ -88,26 +92,39 @@ public class StreamTokenizer {
             currentLine = bufferedReader.readLine();
 
             while (currentLine != null) {
-                matcher = patternDelimiter.matcher(currentLine);
-                if (matcher.matches()) {
-                    blocsCount += 1;
-                    if (isLeadingBloc) {
-                        isLeadingBloc = false;
 
-                        buffer = new StringBuilder(currentLine + "\n");
+                if(patternDelimiter != null){ // a regex has been set
+                    matcher = patternDelimiter.matcher(currentLine);
+                    if (matcher.matches()) {
+                        blocsCount += 1;
+                        if (isLeadingBloc) {
+                            isLeadingBloc = false;
 
+
+                            buffer = new StringBuilder(currentLine + "\n");
+
+                        } else {
+
+                            final byte[] bloc = buffer.toString().getBytes();
+
+                            buffer = new StringBuilder(currentLine + "\n");
+                            return bloc;
+                        }
+
+                    } else if (buffer != null) {
+                        buffer.append(currentLine).append("\n");
                     } else {
-                        final byte[] bloc = buffer.toString().getBytes();
-
                         buffer = new StringBuilder(currentLine + "\n");
-                        return bloc;
                     }
-
-                } else if (buffer != null) {
-                    buffer.append(currentLine).append("\n");
-                } else {
+                }else if (isLeadingBloc) { // no regex (first line)
+                    isLeadingBloc = false;
+                    blocsCount = 1;
                     buffer = new StringBuilder(currentLine + "\n");
+
+                }else {                  // no regex (other lines)
+                    buffer.append(currentLine).append("\n");
                 }
+
                 currentLine = bufferedReader.readLine();
             }
 

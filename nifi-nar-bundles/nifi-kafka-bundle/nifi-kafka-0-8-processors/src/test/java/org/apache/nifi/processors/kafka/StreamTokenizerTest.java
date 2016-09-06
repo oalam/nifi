@@ -46,22 +46,66 @@ public class StreamTokenizerTest {
     public void validateSingleLine() {
         String data = "Be not afraid of greatness:";
         ByteArrayInputStream is = new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
-        StreamTokenizer scanner = null;
-        scanner = new StreamTokenizer(is);
+        StreamTokenizer scanner = new StreamTokenizer(is);
 
         assertTrue(Arrays.equals("Be not afraid of greatness:\n".getBytes(StandardCharsets.UTF_8), scanner.nextToken()));
         assertNull(scanner.nextToken());
     }
+/*
+    @Test
+    public void validateEmptyLines() {
+        String data = "\n\n\n1\n2\n\n\n3\n4\n\n\n";
+        ByteArrayInputStream is = new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
+        StreamTokenizer scanner = new StreamTokenizer(is, ".*", "UTF-8");
+
+
+        byte[] token = scanner.nextToken();
+
+        while (token != null){
+            String str = new String(token);
+            System.out.println("str = " + str);
+            token =scanner.nextToken();
+        }
+
+        assertTrue(Arrays.equals("1\n".getBytes(StandardCharsets.UTF_8), scanner.nextToken()));
+        assertTrue(Arrays.equals("2\n".getBytes(StandardCharsets.UTF_8), scanner.nextToken()));
+        assertTrue(Arrays.equals("3\n".getBytes(StandardCharsets.UTF_8), scanner.nextToken()));
+        assertTrue(Arrays.equals("4\n".getBytes(StandardCharsets.UTF_8), scanner.nextToken()));
+        assertNull(scanner.nextToken());
+    }*/
+
+
 
     @Test
     public void validateNoRegex() {
         String data = "Be not afraid of greatness:\n" +
                 "some are born great, some achieve greatness, and some have greatness thrust upon them.\n" +
                 "The course of true love never did run smooth.\n" +
+                "To thine own self be true\n";
+        ByteArrayInputStream is = new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
+        StreamTokenizer scanner = new StreamTokenizer(is, null, "UTF-8");
+
+/*
+        byte[] token = scanner.nextToken();
+
+        while (token != null){
+            String str = new String(token);
+            System.out.println("str = " + str);
+            token =scanner.nextToken();
+        }*/
+
+        assertTrue(Arrays.equals(data.getBytes(StandardCharsets.UTF_8), scanner.nextToken()));
+        assertNull(scanner.nextToken());
+    }
+
+    @Test
+    public void validateDefaultRegex() {
+        String data = "Be not afraid of greatness:\n" +
+                "some are born great, some achieve greatness, and some have greatness thrust upon them.\n" +
+                "The course of true love never did run smooth.\n" +
                 "To thine own self be true";
         ByteArrayInputStream is = new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
-        StreamTokenizer scanner = null;
-        scanner = new StreamTokenizer(is);
+        StreamTokenizer scanner = new StreamTokenizer(is);
 
         assertTrue(Arrays.equals("Be not afraid of greatness:\n".getBytes(StandardCharsets.UTF_8), scanner.nextToken()));
         assertTrue(Arrays.equals("some are born great, some achieve greatness, and some have greatness thrust upon them.\n".getBytes(StandardCharsets.UTF_8), scanner.nextToken()));

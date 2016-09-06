@@ -60,11 +60,16 @@ class PublishingContextExt {
     }
 
     PublishingContextExt(InputStream contentStream, String topic, int lastAckedMessageIndex, int numberOfPartitions) {
-        this.validateInput(contentStream, topic, lastAckedMessageIndex, numberOfPartitions);
+        this.validateInput(contentStream, topic, lastAckedMessageIndex);
         this.contentStream = contentStream;
         this.topic = topic;
         this.lastAckedMessageIndex = lastAckedMessageIndex;
-        this.numberOfPartitions = numberOfPartitions;
+        if(numberOfPartitions>0){
+            this.numberOfPartitions = numberOfPartitions;
+        }else{
+            this.numberOfPartitions = 1; // must have at least one partition !?
+        }
+
     }
 
 
@@ -133,15 +138,13 @@ class PublishingContextExt {
         }
     }
 
-    private void validateInput(InputStream contentStream, String topic, int lastAckedMessageIndex, int numberOfPartitions) {
+    private void validateInput(InputStream contentStream, String topic, int lastAckedMessageIndex) {
         if (contentStream == null) {
             throw new IllegalArgumentException("'contentStream' must not be null");
         } else if (topic == null || topic.trim().length() == 0) {
             throw new IllegalArgumentException("'topic' must not be null or empty");
         } else if (lastAckedMessageIndex < -1) {
             throw new IllegalArgumentException("'lastAckedMessageIndex' must be >= -1");
-        } else if (numberOfPartitions < 0) {
-            throw new IllegalArgumentException("'numberOfPartitions' must be >= 0");
         }
     }
 }

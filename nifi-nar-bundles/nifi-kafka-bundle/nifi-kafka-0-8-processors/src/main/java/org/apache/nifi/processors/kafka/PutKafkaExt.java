@@ -369,7 +369,11 @@ public class PutKafkaExt extends AbstractKafkaProcessor<KafkaPublisherExt> {
                     .evaluateAttributeExpressions(flowFile).getValue() : null;
 
             partitionCount = KafkaUtils.retrievePartitionCountForTopic(
-                    context.getProperty(ZOOKEEPER_CONNECTION_STRING).getValue(), context.getProperty(TOPIC).getValue());
+                    context.getProperty(ZOOKEEPER_CONNECTION_STRING)
+                            .getValue(),
+                    context.getProperty(TOPIC)
+                            .evaluateAttributeExpressions(flowFile)
+                            .getValue());
         }
 
         PublishingContextExt publishingContext = new PublishingContextExt(contentStream, topicName, lastAckedMessageIndex, partitionCount);
